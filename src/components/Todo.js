@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+function usePrevious(value) {
+    const ref = useRef();
+
+    useEffect(() => {
+        ref.current = value;
+    });
+
+    return ref.current;
+}
 
 export default function Todo(props) {
     // viewing/editing UI toggle hook
     const [isEditing, setEditing] = useState(false);
+    
+    // useRef constants for <input> and <button> DOM elements
+    const editFieldRef = useRef(null);
+    const editButtonRef = useRef(null);
+
+    // ref to track value/change to value of 'isEditing'
+    const wasEditing = usePrevious(isEditing)
 
     // task change hook
     const [newName, setNewName] = useState('');
@@ -29,6 +46,7 @@ export default function Todo(props) {
                     className="todo-text"
                     type="text"
                     onChange={handleChange}
+                    ref={editFieldRef} // input useRef()
                 />
             </div>
             <div className="btn-group">
@@ -71,6 +89,7 @@ export default function Todo(props) {
                     type="button"
                     className="btn"
                     onClick={() => setEditing(true)}
+                    ref={editButtonRef} // edit button useRef()
                 >
                     Edit <span className="visually-hidden">{props.name}</span>
                 </button>
@@ -84,6 +103,21 @@ export default function Todo(props) {
             </div>
         </div>
     );
+
+    // useEffect() call, 
+    // if we're in the editing template view, useEffect() reads the current value and moves the browser's focus to it
+    // the second argument is an array fo values useEffect() should depend on. With these included, useEffect() only runs 
+    // when one of those values changes. 
+
+    useEffect(() => {
+        if (!wasEditing && isEditing) {
+            editFieldRef.current.focus();
+        }   
+        if (wasEditing && !isEditing) {
+            editButtonRef.current.focus();
+        }
+    }, [wasEditing, isEditing])
+
 
     // conditional rendering
     return (
